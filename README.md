@@ -81,7 +81,7 @@ Screenshots without opening a window:
 ```
 
 In the browser (this is what the [live demo](https://varnholt.github.io/tinysubdiv/) runs, built and
-deployed by CI on every push to `main`):
+deployed by CI on every push to the default branch):
 
 ```sh
 emcmake cmake -S . -B build-web -DTINYSUBDIV_BUILD_TESTBED=ON
@@ -104,7 +104,7 @@ Copy `include/tinysubdiv/tinysubdiv.hpp`, then `#include "tinysubdiv.hpp"`.
 
 ```cmake
 include(FetchContent)
-FetchContent_Declare(tinysubdiv GIT_REPOSITORY https://github.com/varnholt/tinysubdiv.git GIT_TAG main)
+FetchContent_Declare(tinysubdiv GIT_REPOSITORY https://github.com/varnholt/tinysubdiv.git GIT_TAG master)
 FetchContent_MakeAvailable(tinysubdiv)
 
 target_link_libraries(my_app PRIVATE tinysubdiv::tinysubdiv)

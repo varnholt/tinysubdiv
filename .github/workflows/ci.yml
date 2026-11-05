@@ -111,7 +111,7 @@ jobs:
 
   pages:
     name: deploy live demo
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    if: github.event_name == 'push' && github.ref_name == github.event.repository.default_branch
     needs: web
     runs-on: ubuntu-24.04
     permissions:
