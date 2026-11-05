@@ -37,7 +37,6 @@ add_executable(tinysubdiv_testbed main.cpp renderer.cpp ui.cpp)
 target_link_libraries(tinysubdiv_testbed PRIVATE tinysubdiv::tinysubdiv tinysubdiv_warnings tinysubdiv_testbed_third_party)
 
 if(EMSCRIPTEN)
-   target_compile_options(tinysubdiv_testbed_third_party PUBLIC -sUSE_GLFW=3)
    target_link_options(
       tinysubdiv_testbed_third_party PUBLIC -sUSE_GLFW=3 -sMIN_WEBGL_VERSION=2 -sMAX_WEBGL_VERSION=2
       -sALLOW_MEMORY_GROWTH=1

@@ -94,7 +94,7 @@ On Linux the native build needs the GLFW dependencies, e.g.
 
 ## Integration
 
-Needs C++23 (GCC 14, Clang 18, MSVC 19.38 or newer; CI covers all three and Emscripten).
+Needs C++23 (GCC 14, Clang 19, MSVC 19.38 or newer; CI covers all three and Emscripten).
 
 ### Single header
 
