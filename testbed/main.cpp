@@ -3,13 +3,19 @@
 //   tinysubdiv_testbed [mesh.obj ...] [--shape NAME] [--level N]
 //                      [--screenshot out.png] [--size WxH] [--no-wireframe] [--no-cage]
 //
-// Mouse: drag to orbit, wheel to zoom.
-// Keys:  Up/Down level, Space/Left/Right shape, W wireframe, C cage, R reset view, Esc quit.
+// The ImGui panel drives everything; mouse and keys work as shortcuts:
+// drag to orbit, wheel to zoom, Up/Down level, Space/Left/Right shape,
+// W wireframe, C cage, R reset view, Esc quit.
 
+#include "app.hpp"
 #include "gl.hpp"
 #include "obj.hpp"
 #include "renderer.hpp"
 #include "shapes.hpp"
+
+#include <imgui.h>
+#include <imgui_impl_glfw.h>
+#include <imgui_impl_opengl3.h>
 
 #include <tinysubdiv/tinysubdiv.hpp>
 
@@ -31,45 +37,8 @@
 namespace
 {
 
-constexpr int max_level = 6;
-
-struct App
-{
-   GLFWwindow* window = nullptr;
-   std::optional<testbed::Renderer> renderer;
-   std::vector<testbed::Shape> shapes;
-   std::size_t shape = 0;
-   int level = 3;
-   testbed::View view;
-   std::size_t triangle_count = 0;
-
-   bool dragging = false;
-   double last_x = 0.0;
-   double last_y = 0.0;
-
-   void rebuild()
-   {
-      const auto& cage = shapes[shape].cage;
-      const auto surface = tinysubdiv::loop(cage, level);
-      triangle_count = surface.triangles.size();
-      renderer->set_meshes(cage, surface);
-      update_title();
-   }
-
-   void update_title() const
-   {
-      const auto title =
-          std::format("tinysubdiv testbed - {} - level {} - {} triangles", shapes[shape].name, level, triangle_count);
-      glfwSetWindowTitle(window, title.c_str());
-   }
-
-   void reset_view()
-   {
-      view.yaw = 0.6f;
-      view.pitch = 0.45f;
-      view.distance = 3.2f;
-   }
-};
+using testbed::App;
+using testbed::max_level;
 
 App* app_from(GLFWwindow* window)
 {
@@ -79,6 +48,11 @@ App* app_from(GLFWwindow* window)
 void on_key(GLFWwindow* window, int key, int /*scancode*/, int action, int /*mods*/)
 {
    if (action == GLFW_RELEASE)
+   {
+      return;
+   }
+
+   if (ImGui::GetIO().WantCaptureKeyboard)
    {
       return;
    }
@@ -122,7 +96,8 @@ void on_mouse_button(GLFWwindow* window, int button, int action, int /*mods*/)
    auto& app = *app_from(window);
    if (button == GLFW_MOUSE_BUTTON_LEFT)
    {
-      app.dragging = action == GLFW_PRESS;
+      // a press on the panel belongs to ImGui; a release always ends the drag
+      app.dragging = action == GLFW_PRESS && !ImGui::GetIO().WantCaptureMouse;
       glfwGetCursorPos(window, &app.last_x, &app.last_y);
    }
 }
@@ -141,6 +116,10 @@ void on_cursor(GLFWwindow* window, double x, double y)
 
 void on_scroll(GLFWwindow* window, double /*x*/, double y)
 {
+   if (ImGui::GetIO().WantCaptureMouse)
+   {
+      return;
+   }
    auto& app = *app_from(window);
    app.view.distance = std::clamp(app.view.distance * (y > 0 ? 0.9f : 1.1f), 1.2f, 20.0f);
 }
@@ -148,12 +127,20 @@ void on_scroll(GLFWwindow* window, double /*x*/, double y)
 void frame(void* user)
 {
    auto& app = *static_cast<App*>(user);
+   glfwPollEvents();
+
+   ImGui_ImplOpenGL3_NewFrame();
+   ImGui_ImplGlfw_NewFrame();
+   ImGui::NewFrame();
+   testbed::draw_ui(app);
+   ImGui::Render();
+
    int width = 0;
    int height = 0;
    glfwGetFramebufferSize(app.window, &width, &height);
    app.renderer->draw(width, height, app.view);
+   ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
    glfwSwapBuffers(app.window);
-   glfwPollEvents();
 }
 
 struct Options
@@ -336,6 +323,22 @@ int run(const Options& options)
          glfwSetCursorPosCallback(app.window, on_cursor);
          glfwSetScrollCallback(app.window, on_scroll);
 
+         // ImGui installs its callbacks on top and forwards to ours
+         IMGUI_CHECKVERSION();
+         ImGui::CreateContext();
+         ImGui::GetIO().IniFilename = nullptr;
+         ImGui::StyleColorsDark();
+         float scale_x = 1.0f;
+         float scale_y = 1.0f;
+         glfwGetWindowContentScale(app.window, &scale_x, &scale_y);
+         ImGui::GetStyle().ScaleAllSizes(scale_x);
+         ImGui::GetStyle().FontScaleDpi = scale_x;
+         ImGui_ImplGlfw_InitForOpenGL(app.window, true);
+#ifdef __EMSCRIPTEN__
+         ImGui_ImplGlfw_InstallEmscriptenCallbacks(app.window, "#canvas");
+#endif
+         ImGui_ImplOpenGL3_Init("#version 300 es");
+
 #ifdef __EMSCRIPTEN__
          // hands control to the browser; App lives on because main never returns
          emscripten_set_main_loop_arg(frame, &app, 0, true);
@@ -344,6 +347,10 @@ int run(const Options& options)
          {
             frame(&app);
          }
+
+         ImGui_ImplOpenGL3_Shutdown();
+         ImGui_ImplGlfw_Shutdown();
+         ImGui::DestroyContext();
 #endif
       }
    }

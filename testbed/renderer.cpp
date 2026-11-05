@@ -236,12 +236,13 @@ void Renderer::draw(int width, int height, const View& view) const
    // push the filled surface back a little so its own wireframe wins the depth test
    glEnable(GL_POLYGON_OFFSET_FILL);
    glPolygonOffset(1.0f, 1.0f);
-   draw_geometry(surface_, GL_TRIANGLES, mvp, model, 0.86f, 0.52f, 0.28f, true);
+   const auto& [r, g, b] = view.surface_color;
+   draw_geometry(surface_, GL_TRIANGLES, mvp, model, r, g, b, true);
    glDisable(GL_POLYGON_OFFSET_FILL);
 
    if (view.wireframe)
    {
-      draw_geometry(surface_, GL_LINES, mvp, model, 0.45f, 0.24f, 0.10f, false);
+      draw_geometry(surface_, GL_LINES, mvp, model, r * 0.5f, g * 0.45f, b * 0.35f, false);
    }
    if (view.cage)
    {

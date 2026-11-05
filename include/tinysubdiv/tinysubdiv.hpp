@@ -2,6 +2,8 @@
 //
 // https://github.com/varnholt/tinysubdiv
 //
+// SPDX-License-Identifier: MIT
+//
 // Usage:
 //    tinysubdiv::Mesh mesh{positions, triangles};
 //    const auto smooth = tinysubdiv::loop(tinysubdiv::weld(mesh), 3);

@@ -5,6 +5,7 @@
 
 #include <tinysubdiv/tinysubdiv.hpp>
 
+#include <array>
 #include <cstdint>
 #include <filesystem>
 #include <utility>
@@ -68,6 +69,7 @@ struct View
    float distance = 5.0f;
    bool wireframe = true;
    bool cage = true;
+   std::array<float, 3> surface_color{0.86f, 0.52f, 0.28f};
 };
 
 class Renderer

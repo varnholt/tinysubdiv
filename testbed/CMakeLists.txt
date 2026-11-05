@@ -5,22 +5,45 @@
 #   emcmake cmake -S . -B build-web -DTINYSUBDIV_BUILD_TESTBED=ON
 
 enable_language(C)
+include(FetchContent)
 
-add_executable(tinysubdiv_testbed main.cpp renderer.cpp)
+FetchContent_Declare(
+   imgui
+   URL https://github.com/ocornut/imgui/archive/refs/tags/v1.93.0.zip
+   URL_HASH SHA256=e21907fd8dd5ea59aa00538632a02ad0a3ededb4ddc533b94702331fbcd6c470
+   DOWNLOAD_EXTRACT_TIMESTAMP TRUE
+)
+FetchContent_MakeAvailable(imgui)
+
+# third-party code, compiled without our warning flags
+add_library(
+   tinysubdiv_testbed_third_party STATIC
+   third_party/stb/stb_image_write.c
+   ${imgui_SOURCE_DIR}/imgui.cpp
+   ${imgui_SOURCE_DIR}/imgui_draw.cpp
+   ${imgui_SOURCE_DIR}/imgui_tables.cpp
+   ${imgui_SOURCE_DIR}/imgui_widgets.cpp
+   ${imgui_SOURCE_DIR}/backends/imgui_impl_glfw.cpp
+   ${imgui_SOURCE_DIR}/backends/imgui_impl_opengl3.cpp
+)
+target_compile_features(tinysubdiv_testbed_third_party PUBLIC cxx_std_23)
+target_compile_definitions(tinysubdiv_testbed_third_party PUBLIC IMGUI_IMPL_OPENGL_ES3)
+target_include_directories(
+   tinysubdiv_testbed_third_party SYSTEM PUBLIC third_party/stb ${imgui_SOURCE_DIR} ${imgui_SOURCE_DIR}/backends
+                                                ${PROJECT_SOURCE_DIR}/examples
+)
+
+add_executable(tinysubdiv_testbed main.cpp renderer.cpp ui.cpp)
 target_link_libraries(tinysubdiv_testbed PRIVATE tinysubdiv::tinysubdiv tinysubdiv_warnings tinysubdiv_testbed_third_party)
 
-add_library(tinysubdiv_testbed_third_party STATIC third_party/stb/stb_image_write.c)
-target_include_directories(tinysubdiv_testbed_third_party SYSTEM PUBLIC third_party/stb ${PROJECT_SOURCE_DIR}/examples)
-
 if(EMSCRIPTEN)
-   set_target_properties(tinysubdiv_testbed PROPERTIES SUFFIX ".html")
+   target_compile_options(tinysubdiv_testbed_third_party PUBLIC -sUSE_GLFW=3)
    target_link_options(
-      tinysubdiv_testbed PRIVATE -sUSE_GLFW=3 -sMIN_WEBGL_VERSION=2 -sMAX_WEBGL_VERSION=2
+      tinysubdiv_testbed_third_party PUBLIC -sUSE_GLFW=3 -sMIN_WEBGL_VERSION=2 -sMAX_WEBGL_VERSION=2
       -sALLOW_MEMORY_GROWTH=1
    )
+   set_target_properties(tinysubdiv_testbed PROPERTIES SUFFIX ".html")
 else()
-   include(FetchContent)
-
    set(GLFW_BUILD_DOCS OFF CACHE BOOL "" FORCE)
    set(GLFW_BUILD_TESTS OFF CACHE BOOL "" FORCE)
    set(GLFW_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
@@ -34,7 +57,10 @@ else()
    )
    FetchContent_MakeAvailable(glfw)
 
+   # glad loads OpenGL ES 3.0; the shim lets ImGui's ES3 backend include <GLES3/gl3.h>
    target_sources(tinysubdiv_testbed_third_party PRIVATE third_party/glad/src/gles2.c)
-   target_include_directories(tinysubdiv_testbed_third_party SYSTEM PUBLIC third_party/glad/include)
+   target_include_directories(
+      tinysubdiv_testbed_third_party SYSTEM PUBLIC third_party/glad/include third_party/gles3_shim
+   )
    target_link_libraries(tinysubdiv_testbed_third_party PUBLIC glfw)
 endif()

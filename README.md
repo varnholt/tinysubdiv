@@ -65,8 +65,10 @@ cmake --build build
 ./build/testbed/tinysubdiv_testbed model.obj       # your own mesh first
 ```
 
-Drag to orbit, scroll to zoom. Up/Down change the level, Space or Left/Right switch
-the shape, W toggles the wireframe, C the cage, R resets the view.
+A Dear ImGui panel picks the shape and level, toggles wireframe and cage, sets the
+surface colour, saves screenshots and shows vertex/edge/face counts and how long
+`loop()` took. Shortcuts: drag to orbit, scroll to zoom, Up/Down level, Space or
+Left/Right shape, W wireframe, C cage, R reset view.
 
 Screenshots without opening a window:
 
@@ -125,3 +127,10 @@ testbed only with `TINYSUBDIV_BUILD_TESTBED=ON`. Override with `TINYSUBDIV_BUILD
 ./build/examples/tinysubdiv_obj input.obj output.obj 2        # weld, then 2 levels
 ./build/examples/tinysubdiv_obj input.obj output.obj 2 1e-4   # weld within 1e-4
 ```
+
+## License
+
+[MIT](LICENSE). The testbed uses [GLFW](https://www.glfw.org) (zlib),
+[Dear ImGui](https://github.com/ocornut/imgui) (MIT), a [glad](https://github.com/Dav1dde/glad)
+generated loader and [stb_image_write](https://github.com/nothings/stb) (public domain / MIT).
+The library header itself has no dependencies.
