@@ -8,6 +8,7 @@
 #include <array>
 #include <cstdint>
 #include <filesystem>
+#include <functional>
 #include <utility>
 #include <vector>
 
@@ -82,8 +83,10 @@ public:
 
    void draw(int width, int height, const View& view) const;
 
-   // renders one frame offscreen with 4x MSAA and writes it as PNG
-   bool screenshot(const std::filesystem::path& path, int width, int height, const View& view) const;
+   // renders one frame offscreen with 4x MSAA and writes it as PNG;
+   // `overlay` draws on top of the scene, e.g. the ImGui panel
+   bool screenshot(const std::filesystem::path& path, int width, int height, const View& view,
+                   const std::function<void()>& overlay = {}) const;
 
    [[nodiscard]] float radius() const noexcept
    {

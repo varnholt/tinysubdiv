@@ -37,7 +37,8 @@ struct App
    int level = 3;
    View view;
    Stats stats;
-   std::string status;  // last message shown in the panel, e.g. a saved screenshot
+   std::string status;    // last message shown in the panel, e.g. a saved screenshot
+   bool show_fps = true;  // off for screenshots, where the frame rate means nothing
 
    bool dragging = false;
    double last_x = 0.0;

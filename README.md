@@ -5,6 +5,8 @@
 Loop subdivision for triangle meshes in a single C++23 header, plus an
 OpenGL ES 3 testbed that also runs in the browser (WebGL2 via Emscripten).
 
+**[Live demo](https://varnholt.github.io/tinysubdiv/)**: the testbed as WebAssembly, right in your browser.
+
 ![letter T at subdivision levels 0 to 3](doc/levels.png)
 
 - one header, no dependencies: copy `include/tinysubdiv/tinysubdiv.hpp` into your project
@@ -51,6 +53,8 @@ not carried over yet.
 
 ## Testbed
 
+[![testbed with the torus at level 3](doc/testbed.png)](https://varnholt.github.io/tinysubdiv/)
+
 ![cube](doc/cube.png) ![open box](doc/open_box.png)
 ![torus](doc/torus.png) ![letter T](doc/letter_T.png)
 
@@ -76,7 +80,8 @@ Screenshots without opening a window:
 ./build/testbed/tinysubdiv_testbed --shape torus --level 3 --size 1280x720 --screenshot torus.png
 ```
 
-In the browser:
+In the browser (this is what the [live demo](https://varnholt.github.io/tinysubdiv/) runs, built and
+deployed by CI on every push to `main`):
 
 ```sh
 emcmake cmake -S . -B build-web -DTINYSUBDIV_BUILD_TESTBED=ON

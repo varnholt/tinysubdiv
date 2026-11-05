@@ -80,7 +80,10 @@ void draw_ui(App& app)
    text(std::format("cage     {:>7} V {:>7} E {:>7} F", s.cage_vertices, s.cage_edges, s.cage_triangles));
    text(std::format("surface  {:>7} V {:>17} F", s.surface_vertices, s.surface_triangles));
    text(std::format("loop()   {:.2f} ms", s.milliseconds));
-   text(std::format("frame    {:.1f} fps", ImGui::GetIO().Framerate));
+   if (app.show_fps)
+   {
+      text(std::format("frame    {:.1f} fps", ImGui::GetIO().Framerate));
+   }
 
    if (!app.status.empty())
    {

@@ -252,7 +252,8 @@ void Renderer::draw(int width, int height, const View& view) const
    glBindVertexArray(0);
 }
 
-bool Renderer::screenshot(const std::filesystem::path& path, int width, int height, const View& view) const
+bool Renderer::screenshot(const std::filesystem::path& path, int width, int height, const View& view,
+                          const std::function<void()>& overlay) const
 {
    GLuint name = 0;
 
@@ -293,6 +294,10 @@ bool Renderer::screenshot(const std::filesystem::path& path, int width, int heig
    }
 
    draw(width, height, view);
+   if (overlay)
+   {
+      overlay();
+   }
 
    glBindFramebuffer(GL_READ_FRAMEBUFFER, msaa.get());
    glBindFramebuffer(GL_DRAW_FRAMEBUFFER, resolved.get());

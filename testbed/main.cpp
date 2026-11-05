@@ -1,7 +1,7 @@
 // tinysubdiv testbed: shows a control cage and its Loop subdivision surface.
 //
 //   tinysubdiv_testbed [mesh.obj ...] [--shape NAME] [--level N]
-//                      [--screenshot out.png] [--size WxH] [--no-wireframe] [--no-cage]
+//                      [--screenshot out.png [--ui]] [--size WxH] [--no-wireframe] [--no-cage]
 //
 // The ImGui panel drives everything; mouse and keys work as shortcuts:
 // drag to orbit, wheel to zoom, Up/Down level, Space/Left/Right shape,
@@ -23,6 +23,7 @@
 #include <charconv>
 #include <exception>
 #include <format>
+#include <functional>
 #include <optional>
 #include <print>
 #include <span>
@@ -143,6 +144,34 @@ void frame(void* user)
    glfwSwapBuffers(app.window);
 }
 
+void init_imgui(GLFWwindow* window, bool install_callbacks)
+{
+   IMGUI_CHECKVERSION();
+   ImGui::CreateContext();
+   ImGui::GetIO().IniFilename = nullptr;
+   ImGui::StyleColorsDark();
+
+   float scale_x = 1.0f;
+   float scale_y = 1.0f;
+   glfwGetWindowContentScale(window, &scale_x, &scale_y);
+   ImGui::GetStyle().ScaleAllSizes(scale_x);
+   ImGui::GetStyle().FontScaleDpi = scale_x;
+
+   // with install_callbacks, ImGui's callbacks go on top of ours and forward to them
+   ImGui_ImplGlfw_InitForOpenGL(window, install_callbacks);
+#ifdef __EMSCRIPTEN__
+   ImGui_ImplGlfw_InstallEmscriptenCallbacks(window, "#canvas");
+#endif
+   ImGui_ImplOpenGL3_Init("#version 300 es");
+}
+
+void shutdown_imgui()
+{
+   ImGui_ImplOpenGL3_Shutdown();
+   ImGui_ImplGlfw_Shutdown();
+   ImGui::DestroyContext();
+}
+
 struct Options
 {
    std::vector<std::string> obj_files;
@@ -153,6 +182,7 @@ struct Options
    int height = 720;
    bool wireframe = true;
    bool cage = true;
+   bool ui = false;  // include the ImGui panel in --screenshot
 };
 
 std::optional<Options> parse_options(std::span<char*> args)
@@ -218,6 +248,10 @@ std::optional<Options> parse_options(std::span<char*> args)
       else if (arg == "--no-cage")
       {
          options.cage = false;
+      }
+      else if (arg == "--ui")
+      {
+         options.ui = true;
       }
       else if (arg.starts_with("--"))
       {
@@ -309,10 +343,36 @@ int run(const Options& options)
 
       if (options.screenshot)
       {
-         if (!app.renderer->screenshot(*options.screenshot, options.width, options.height, app.view))
+         std::function<void()> overlay;
+         if (options.ui)
+         {
+            init_imgui(app.window, false);
+            app.show_fps = false;
+
+            // a few frames so the auto-sized panel settles
+            for (int i = 0; i < 3; ++i)
+            {
+               ImGui_ImplOpenGL3_NewFrame();
+               ImGui_ImplGlfw_NewFrame();
+               ImGui::NewFrame();
+               testbed::draw_ui(app);
+               ImGui::Render();
+            }
+            overlay = []
+            {
+               ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+            };
+         }
+
+         if (!app.renderer->screenshot(*options.screenshot, options.width, options.height, app.view, overlay))
          {
             std::println(stderr, "could not write {}", *options.screenshot);
             exit_code = 1;
+         }
+
+         if (options.ui)
+         {
+            shutdown_imgui();
          }
       }
       else
@@ -323,21 +383,7 @@ int run(const Options& options)
          glfwSetCursorPosCallback(app.window, on_cursor);
          glfwSetScrollCallback(app.window, on_scroll);
 
-         // ImGui installs its callbacks on top and forwards to ours
-         IMGUI_CHECKVERSION();
-         ImGui::CreateContext();
-         ImGui::GetIO().IniFilename = nullptr;
-         ImGui::StyleColorsDark();
-         float scale_x = 1.0f;
-         float scale_y = 1.0f;
-         glfwGetWindowContentScale(app.window, &scale_x, &scale_y);
-         ImGui::GetStyle().ScaleAllSizes(scale_x);
-         ImGui::GetStyle().FontScaleDpi = scale_x;
-         ImGui_ImplGlfw_InitForOpenGL(app.window, true);
-#ifdef __EMSCRIPTEN__
-         ImGui_ImplGlfw_InstallEmscriptenCallbacks(app.window, "#canvas");
-#endif
-         ImGui_ImplOpenGL3_Init("#version 300 es");
+         init_imgui(app.window, true);
 
 #ifdef __EMSCRIPTEN__
          // hands control to the browser; App lives on because main never returns
@@ -348,9 +394,7 @@ int run(const Options& options)
             frame(&app);
          }
 
-         ImGui_ImplOpenGL3_Shutdown();
-         ImGui_ImplGlfw_Shutdown();
-         ImGui::DestroyContext();
+         shutdown_imgui();
 #endif
       }
    }

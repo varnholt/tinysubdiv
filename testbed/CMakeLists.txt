@@ -42,7 +42,8 @@ if(EMSCRIPTEN)
       tinysubdiv_testbed_third_party PUBLIC -sUSE_GLFW=3 -sMIN_WEBGL_VERSION=2 -sMAX_WEBGL_VERSION=2
       -sALLOW_MEMORY_GROWTH=1
    )
-   set_target_properties(tinysubdiv_testbed PROPERTIES SUFFIX ".html")
+   set_target_properties(tinysubdiv_testbed PROPERTIES SUFFIX ".html" LINK_DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/web/shell.html)
+   target_link_options(tinysubdiv_testbed PRIVATE --shell-file ${CMAKE_CURRENT_SOURCE_DIR}/web/shell.html)
 else()
    set(GLFW_BUILD_DOCS OFF CACHE BOOL "" FORCE)
    set(GLFW_BUILD_TESTS OFF CACHE BOOL "" FORCE)
