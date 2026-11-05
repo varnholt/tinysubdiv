@@ -1,0 +1,110 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  library:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: gcc-14
+            os: ubuntu-24.04
+            cxx: g++-14
+          - name: clang-18
+            os: ubuntu-24.04
+            cxx: clang++-18
+          - name: msvc
+            os: windows-latest
+            testbed: ON
+
+    name: ${{ matrix.name }}
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configure
+        run: cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DTINYSUBDIV_BUILD_TESTBED=${{ matrix.testbed || 'OFF' }}
+        env:
+          CXX: ${{ matrix.cxx }}
+
+      - name: Build
+        run: cmake --build build --config Release
+
+      - name: Test
+        run: ctest --test-dir build -C Release --output-on-failure
+
+      - name: Install and consume with find_package
+        if: runner.os == 'Linux'
+        env:
+          CXX: ${{ matrix.cxx }}
+        run: |
+          cmake --install build --prefix "$PWD/prefix"
+          cmake -S tests/package_consumer -B consumer -DCMAKE_PREFIX_PATH="$PWD/prefix"
+          cmake --build consumer
+          ./consumer/consumer
+
+  testbed-linux:
+    name: testbed (Linux, Mesa)
+    runs-on: ubuntu-24.04
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install GLFW and Mesa dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y xorg-dev libwayland-dev libxkbcommon-dev wayland-protocols \
+            libgles-dev libegl-dev libgl1-mesa-dri xvfb
+
+      - name: Build
+        env:
+          CXX: g++-14
+          CC: gcc-14
+        run: |
+          cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DTINYSUBDIV_BUILD_TESTBED=ON
+          cmake --build build
+
+      - name: Render screenshots with software OpenGL ES
+        env:
+          LIBGL_ALWAYS_SOFTWARE: 1
+        run: |
+          for shape in cube "open box" torus "letter T"; do
+            xvfb-run -a ./build/testbed/tinysubdiv_testbed --shape "$shape" --level 3 \
+              --size 640x400 --screenshot "screenshot-${shape// /-}.png"
+          done
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: testbed-screenshots
+          path: screenshot-*.png
+
+  web:
+    name: web (Emscripten, WebGL2)
+    runs-on: ubuntu-24.04
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: mymindstorm/setup-emsdk@v14
+        with:
+          version: latest
+
+      - name: Build
+        run: |
+          emcmake cmake -S . -B build-web -DCMAKE_BUILD_TYPE=Release -DTINYSUBDIV_BUILD_TESTBED=ON
+          cmake --build build-web
+
+      - name: Test under Node
+        run: ctest --test-dir build-web --output-on-failure
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: testbed-web
+          path: |
+            build-web/testbed/tinysubdiv_testbed.html
+            build-web/testbed/tinysubdiv_testbed.js
+            build-web/testbed/tinysubdiv_testbed.wasm
