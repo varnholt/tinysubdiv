@@ -135,6 +135,8 @@ testbed only with `TINYSUBDIV_BUILD_TESTBED=ON`. Override with `TINYSUBDIV_BUILD
 
 ## Rust
 
+**[Interactive Rust demo](https://varnholt.github.io/tinysubdiv/rust/)** — [native and browser build instructions](rust/demo/README.md).
+
 [`rust/`](rust/README.md) contains the native `tinysubdiv` Rust crate: no dependencies and no C++ toolchain required. It includes examples, tests against the C++ implementation, and Cargo packaging. See the [Rust README](rust/README.md) for the API and local installation.
 
 ## License
