@@ -1,6 +1,6 @@
 # tinysubdiv
 
-**[Interactive Rust demo](https://varnholt.github.io/tinysubdiv/rust/)** — [run it natively or build for the browser](demo/README.md).
+**[Interactive Rust demo](https://varnholt.github.io/tinysubdiv/rust/)** — [run it natively or build for the browser](https://github.com/varnholt/tinysubdiv/blob/rust-v0.1.1/rust/demo/README.md).
 
 Native Rust Loop subdivision for indexed triangle meshes. No dependencies, no C++ toolchain, and no unsafe code. MIT licensed. Requires Rust 1.85 or newer.
 
