@@ -23,7 +23,7 @@ tinysubdiv = "0.1"
 
 The crate lives alongside the C++ implementation in `rust/`. To use a local checkout, replace the version with `{ path = "/path/to/tinysubdiv/rust" }`.
 
-[crates.io](https://crates.io/crates/tinysubdiv) · [API documentation](https://docs.rs/tinysubdiv)
+[crates.io](https://crates.io/crates/tinysubdiv) | [API documentation](https://docs.rs/tinysubdiv)
 
 ## API
 
