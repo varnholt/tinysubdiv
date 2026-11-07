@@ -133,6 +133,10 @@ testbed only with `TINYSUBDIV_BUILD_TESTBED=ON`. Override with `TINYSUBDIV_BUILD
 ./build/examples/tinysubdiv_obj input.obj output.obj 2 1e-4   # weld within 1e-4
 ```
 
+## Rust
+
+[`rust/`](rust/README.md) contains the native `tinysubdiv` Rust crate: no dependencies and no C++ toolchain required. It includes examples, tests against the C++ implementation, and Cargo packaging. See the [Rust README](rust/README.md) for the API and local installation.
+
 ## License
 
 [MIT](LICENSE). The testbed uses [GLFW](https://www.glfw.org) (zlib),
